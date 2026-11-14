@@ -28,7 +28,7 @@
 <script>
 const KEY='ad_santana_v1',CFG='ad_santana_fb_cfg',TYPES=['membros','ofertas','dizimos','despesas','escalas','cultos'],SYNC_TYPES=['membros','ofertas','dizimos','despesas','escalas','cultos','categoriasDespesas'];
 const EMPTY={membros:[],ofertas:[],dizimos:[],despesas:[],escalas:[],cultos:[],categoriasDespesas:[]};
-let data=load(),auth=null,db=null,ready=false,listener=null,app=null,applying=false,lastSynced=JSON.parse(JSON.stringify(EMPTY));
+let data=load(),auth=null,db=null,ready=false,listener=null,app=null,applying=false,lastSynced=JSON.parse(JSON.stringify(EMPTY)),syncBusy=false,syncAgain=false;
 const F={membros:['nome','nasc','tel','ing','cong','func','sit','obs'],ofertas:['data','valor','tipo','resp','obs'],dizimos:['data','valor','nome','forma','resp','obs'],despesas:['data','categoria','valor','resp','descricao','obs'],escalas:['data','hora','pessoa','serv','culto','obs'],cultos:['data','hora','tipo','resp','tema','texto','obs']};
 const C={membros:[['nome','Nome'],['tel','Telefone'],['cong','Congregação'],['func','Função'],['sit','Situação']],ofertas:[['data','Data'],['valor','Valor'],['tipo','Tipo'],['resp','Responsável']],dizimos:[['data','Data'],['nome','Dizimista'],['valor','Valor'],['forma','Forma'],['resp','Responsável']],despesas:[['data','Data'],['categoria','Categoria'],['descricao','Descrição'],['valor','Valor'],['resp','Responsável'],['obs','Observações']],escalas:[['data','Data'],['hora','Horário'],['pessoa','Pessoa'],['serv','Serviço'],['culto','Culto']],cultos:[['data','Data'],['hora','Horário'],['tipo','Culto'],['tema','Tema'],['texto','Texto bíblico'],['resp','Responsável']]};
 const PREFIX={membros:'m',ofertas:'o',dizimos:'d',despesas:'x',escalas:'e',cultos:'c'},TABLE={membros:'tm',ofertas:'to',dizimos:'td',despesas:'tx',escalas:'te',cultos:'tc'},SEARCH={membros:'qm',ofertas:'qo',dizimos:'qd',despesas:'qx',escalas:'qe',cultos:'qc'};
@@ -37,23 +37,48 @@ function money(n){return Number(n||0).toLocaleString('pt-BR',{style:'currency',c
 function dateBR(s){if(!s)return '';let [y,m,d]=s.split('-');return d+'/'+m+'/'+y}
 function safe(s){return String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}
 function save(){localStorage.setItem(KEY,JSON.stringify(data));dashboard();if(ready&&!applying)syncChanges()}
+function cloneData(value){return JSON.parse(JSON.stringify(value));}
+function asArray(value){return Array.isArray(value)?value:Object.values(value||{});}
+function mergeLocalPending(remote,local,base){
+ const merged=cloneData(remote);
+ TYPES.forEach(t=>{
+  const baseMap=new Map(asArray(base[t]).map(x=>[x.id,x]));
+  const localMap=new Map(asArray(local[t]).map(x=>[x.id,x]));
+  const remoteMap=new Map(asArray(remote[t]).map(x=>[x.id,x]));
+  baseMap.forEach((old,id)=>{if(!localMap.has(id))remoteMap.delete(id)});
+  localMap.forEach((item,id)=>{if(JSON.stringify(baseMap.get(id))!==JSON.stringify(item))remoteMap.set(id,item)});
+  merged[t]=Array.from(remoteMap.values());
+ });
+ const oldCats=base.categoriasDespesas||[],localCats=local.categoriasDespesas||[];
+ if(JSON.stringify(oldCats)!==JSON.stringify(localCats)){
+  merged.categoriasDespesas=Array.from(new Set([...(remote.categoriasDespesas||[]),...localCats]));
+ }
+ return merged;
+}
 async function syncChanges(){
  if(!ready||applying)return;
- const updates={};
- TYPES.forEach(t=>{
-  const before=new Map((lastSynced[t]||[]).map(x=>[x.id,x]));
-  const after=new Map((data[t]||[]).map(x=>[x.id,x]));
-  after.forEach((item,id)=>{if(JSON.stringify(before.get(id))!==JSON.stringify(item))updates[t+'/'+id]=item});
-  before.forEach((item,id)=>{if(!after.has(id))updates[t+'/'+id]=null});
- });
- if(JSON.stringify(lastSynced.categoriasDespesas||[])!==JSON.stringify(data.categoriasDespesas||[])){
-  updates.categoriasDespesas=data.categoriasDespesas||[];
- }
- if(!Object.keys(updates).length)return;
+ if(syncBusy){syncAgain=true;return;}
+ syncBusy=true;
  try{
-  await db.ref('igrejaSantana/dados').update(updates);
-  lastSynced=JSON.parse(JSON.stringify(data));
+  do{
+   syncAgain=false;
+   const updates={};
+   TYPES.forEach(t=>{
+    const before=new Map(asArray(lastSynced[t]).map(x=>[x.id,x]));
+    const after=new Map(asArray(data[t]).map(x=>[x.id,x]));
+    after.forEach((item,id)=>{if(JSON.stringify(before.get(id))!==JSON.stringify(item))updates[t+'/'+id]=item});
+    before.forEach((item,id)=>{if(!after.has(id))updates[t+'/'+id]=null});
+   });
+   const oldCats=lastSynced.categoriasDespesas||[],newCats=data.categoriasDespesas||[];
+   if(JSON.stringify(oldCats)!==JSON.stringify(newCats))updates.categoriasDespesas=newCats;
+   if(!Object.keys(updates).length)break;
+   const snapshot=cloneData(data);
+   await db.ref('igrejaSantana/dados').update(updates);
+   lastSynced=snapshot;
+   if(JSON.stringify(data)!==JSON.stringify(snapshot))syncAgain=true;
+  }while(syncAgain);
  }catch(e){fbmsg('Falha ao sincronizar: '+e.message,true)}
+ finally{syncBusy=false;if(syncAgain&&ready)syncChanges();}
 }
 function dashboard(){document.getElementById('kM').textContent=data.membros.length;document.getElementById('kO').textContent=money(total('ofertas'));document.getElementById('kD').textContent=money(total('dizimos'));document.getElementById('kX').textContent=money(total('despesas'));let today=new Date().toISOString().slice(0,10);document.getElementById('kE').textContent=data.escalas.filter(x=>x.data>=today).length;document.getElementById('ro').textContent=money(total('ofertas'));document.getElementById('rd').textContent=money(total('dizimos'));document.getElementById('rx').textContent=money(total('despesas'));document.getElementById('rt').textContent=money(total('ofertas')+total('dizimos')-total('despesas'));document.getElementById('rm').textContent=data.membros.length;document.getElementById('binfo').textContent='Atualizado em '+new Date().toLocaleString('pt-BR');document.getElementById('membrosLista').innerHTML=data.membros.map(x=>'<option value="'+safe(x.nome)+'">').join('')}
 function total(t){return data[t].reduce((s,x)=>s+Number(x.valor||0),0)}
@@ -118,24 +143,24 @@ async function login(){try{
  if(listener)ref.off('value',listener);
  listener=s=>{
   const v=s.val();
-  if(v){
-   applying=true;
-   const normalized={...JSON.parse(JSON.stringify(EMPTY)),...v};
-   SYNC_TYPES.forEach(t=>{if(!Array.isArray(normalized[t]))normalized[t]=Object.values(normalized[t]||{})});
-   data=normalized;
-   lastSynced=JSON.parse(JSON.stringify(normalized));
-   localStorage.setItem(KEY,JSON.stringify(data));
-   renderAll();
-   applying=false;
-  }else{
-   lastSynced=JSON.parse(JSON.stringify(EMPTY));
-   ref.set(data).then(()=>{lastSynced=JSON.parse(JSON.stringify(data))}).catch(e=>fbmsg('Erro ao iniciar dados remotos: '+e.message,true));
-  }
+  const remote={...cloneData(EMPTY),...(v||{})};
+  SYNC_TYPES.forEach(t=>{if(!Array.isArray(remote[t]))remote[t]=Object.values(remote[t]||{})});
+  const localBefore=cloneData(data),baseBefore=cloneData(lastSynced);
+  const merged=mergeLocalPending(remote,localBefore,baseBefore);
+  const hasLocalPending=JSON.stringify(merged)!==JSON.stringify(remote);
+  applying=true;
+  data=merged;
+  lastSynced=cloneData(remote);
+  localStorage.setItem(KEY,JSON.stringify(data));
+  renderAll();
+  applying=false;
+  if(hasLocalPending)syncChanges();
+  if(!v)fbmsg('Banco remoto inicializado. Sincronizando os registros deste dispositivo.');
  };
  ref.on('value',listener,e=>fbmsg('Erro de leitura: '+e.message,true));
  ready=true;
  document.getElementById('status').textContent='● Firebase conectado — '+auth.currentUser.email;
- fbmsg('Conectado. Os registros serão sincronizados individualmente entre os dispositivos.');
+ fbmsg('Conectado. O sistema está conciliando alterações locais e remotas.');
  }catch(e){fbmsg(e.message,true)}}
 async function logout(){try{if(auth)await auth.signOut();if(db&&listener)db.ref('igrejaSantana/dados').off('value',listener);ready=false;listener=null;document.getElementById('status').textContent='● Modo local — dados neste dispositivo';fbmsg('Desconectado. Dados locais preservados.')}catch(e){fbmsg(e.message,true)}}
 try{let c=JSON.parse(localStorage.getItem(CFG)||'{}');Object.entries({apiKey:'apiKey',authDomain:'authDomain',databaseURL:'databaseURL',projectId:'projectId',appId:'appId',storageBucket:'storageBucket'}).forEach(([id,k])=>{if(c[k])document.getElementById(id).value=c[k]})}catch(e){}
