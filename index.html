@@ -40,15 +40,20 @@ function save(){localStorage.setItem(KEY,JSON.stringify(data));dashboard();if(re
 async function syncChanges(){
  if(!ready||applying)return;
  const updates={};
- SYNC_TYPES.forEach(t=>{
+ TYPES.forEach(t=>{
   const before=new Map((lastSynced[t]||[]).map(x=>[x.id,x]));
   const after=new Map((data[t]||[]).map(x=>[x.id,x]));
   after.forEach((item,id)=>{if(JSON.stringify(before.get(id))!==JSON.stringify(item))updates[t+'/'+id]=item});
   before.forEach((item,id)=>{if(!after.has(id))updates[t+'/'+id]=null});
  });
+ if(JSON.stringify(lastSynced.categoriasDespesas||[])!==JSON.stringify(data.categoriasDespesas||[])){
+  updates.categoriasDespesas=data.categoriasDespesas||[];
+ }
  if(!Object.keys(updates).length)return;
- try{await db.ref('igrejaSantana/dados').update(updates);lastSynced=JSON.parse(JSON.stringify(data))}
- catch(e){fbmsg('Falha ao sincronizar: '+e.message,true)}
+ try{
+  await db.ref('igrejaSantana/dados').update(updates);
+  lastSynced=JSON.parse(JSON.stringify(data));
+ }catch(e){fbmsg('Falha ao sincronizar: '+e.message,true)}
 }
 function dashboard(){document.getElementById('kM').textContent=data.membros.length;document.getElementById('kO').textContent=money(total('ofertas'));document.getElementById('kD').textContent=money(total('dizimos'));document.getElementById('kX').textContent=money(total('despesas'));let today=new Date().toISOString().slice(0,10);document.getElementById('kE').textContent=data.escalas.filter(x=>x.data>=today).length;document.getElementById('ro').textContent=money(total('ofertas'));document.getElementById('rd').textContent=money(total('dizimos'));document.getElementById('rx').textContent=money(total('despesas'));document.getElementById('rt').textContent=money(total('ofertas')+total('dizimos')-total('despesas'));document.getElementById('rm').textContent=data.membros.length;document.getElementById('binfo').textContent='Atualizado em '+new Date().toLocaleString('pt-BR');document.getElementById('membrosLista').innerHTML=data.membros.map(x=>'<option value="'+safe(x.nome)+'">').join('')}
 function total(t){return data[t].reduce((s,x)=>s+Number(x.valor||0),0)}
