@@ -68,8 +68,21 @@ function relGeral(){printHTML(reportHTML(TYPES,'Relatório geral da igreja'))}
 function fbmsg(s,err=false){let e=document.getElementById('fbmsg');e.textContent=s;e.style.color=err?'#b42318':'#16804a'}
 function config(){return {apiKey:apiKey.value.trim(),authDomain:authDomain.value.trim(),databaseURL:databaseURL.value.trim(),projectId:projectId.value.trim(),appId:appId.value.trim(),storageBucket:storageBucket.value.trim()}}
 function saveCfg(){let c=config();if(!c.apiKey||!c.authDomain||!c.databaseURL||!c.projectId||!c.appId){fbmsg('Preencha API Key, Auth Domain, Database URL, Project ID e App ID.',true);return}localStorage.setItem(CFG,JSON.stringify(c));fbmsg('Configuração salva neste navegador.')}
-function initFB(){let c=config();if(!c.apiKey||!c.authDomain||!c.databaseURL||!c.projectId||!c.appId)throw Error('Configuração Firebase incompleta.');if(!window.firebase)throw Error('SDK Firebase indisponível. Verifique a internet.');if(!app){app=firebase.apps.length?firebase.app():firebase.initializeApp(c);auth=firebase.auth();db=firebase.database()}}
-async function createUser(){try{initFB();if(fbPass.value.length<6)throw Error('A senha deve ter ao menos 6 caracteres.');await auth.createUserWithEmailAndPassword(fbEmail.value.trim(),fbPass.value);fbmsg('Usuário criado e conectado.')}catch(e){fbmsg(e.message,true)}}
+function initFB(){
+ const c=config();
+ if(!c.apiKey||!c.authDomain||!c.databaseURL||!c.projectId||!c.appId)throw Error('Configuração Firebase incompleta. Confira a API Key e os demais campos.');
+ if(!window.firebase)throw Error('Biblioteca principal do Firebase não carregou. Verifique a internet e atualize a página.');
+ if(typeof firebase.auth!=='function')throw Error('Biblioteca Firebase Authentication não carregou. Atualize a página ou publique novamente o index.html.');
+ if(typeof firebase.database!=='function')throw Error('Biblioteca Firebase Realtime Database não carregou. Atualize a página ou publique novamente o index.html.');
+ try{
+  app=firebase.apps.length?firebase.app():firebase.initializeApp(c);
+  auth=app.auth();
+  db=app.database();
+ }catch(e){auth=null;db=null;throw Error('Falha ao inicializar Firebase: '+e.message)}
+ if(!auth||typeof auth.signInWithEmailAndPassword!=='function')throw Error('O serviço de autenticação não foi inicializado corretamente. Confira se o SDK compat está carregado.');
+ if(!db||typeof db.ref!=='function')throw Error('O serviço Realtime Database não foi inicializado corretamente.');
+ return true;
+}
 async function login(){try{
  initFB();
  await auth.signInWithEmailAndPassword(fbEmail.value.trim(),fbPass.value);
