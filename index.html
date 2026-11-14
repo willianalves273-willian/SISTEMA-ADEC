@@ -16,7 +16,7 @@
 <section class="panel" id="cultos"><div class="card"><h2>Dias de cultos e temas</h2><form id="fc"><input type="hidden" id="cid"><div class="grid"><div class="field"><label>Data *</label><input id="cdata" type="date" required></div><div class="field"><label>Horário</label><input id="chora" type="time"></div><div class="field"><label>Dia / tipo</label><select id="ctipo"><option>Culto de domingo</option><option>Culto de ensino</option><option>Oração</option><option>Santa Ceia</option><option>Campanha</option><option>Festividade</option><option>Evento especial</option><option>Outro</option></select></div><div class="field"><label>Dirigente / responsável</label><input id="cresp" list="membrosLista"></div><div class="field wide"><label>Tema do culto</label><input id="ctema"></div><div class="field wide"><label>Texto bíblico</label><input id="ctexto" placeholder="Ex.: Salmos 23:1"></div><div class="field full"><label>Observações</label><textarea id="cobs"></textarea></div></div><div class="actions"><button>Salvar culto</button><button type="button" class="secondary" onclick="resetForm('fc')">Limpar</button></div></form></div><div class="card"><div class="toolbar"><h2>Agenda de cultos</h2><input id="qc" placeholder="Buscar..." oninput="render('cultos')"></div><div id="tc"></div></div></section>
 <section class="panel" id="relatorios"><div class="card"><h2>Relatórios e impressão</h2><div class="notice">Escolha uma aba para imprimir individualmente ou gere um relatório geral. O período é opcional.</div><div class="grid"><div class="field"><label>Relatório</label><select id="rtipo"><option value="membros">Membros</option><option value="ofertas">Ofertas</option><option value="dizimos">Dízimos</option><option value="escalas">Escalas</option><option value="cultos">Cultos e temas</option></select></div><div class="field"><label>Data inicial</label><input id="rini" type="date"></div><div class="field"><label>Data final</label><input id="rfim" type="date"></div></div><div class="actions"><button onclick="relIndividual()">Imprimir relatório selecionado</button><button class="gold" onclick="relGeral()">Imprimir relatório geral</button></div></div><div class="card"><h3>Resumo financeiro</h3><div class="kpis"><div class="kpi"><small>Ofertas</small><strong id="ro">R$ 0,00</strong></div><div class="kpi"><small>Dízimos</small><strong id="rd">R$ 0,00</strong></div><div class="kpi"><small>Total</small><strong id="rt">R$ 0,00</strong></div><div class="kpi"><small>Membros</small><strong id="rm">0</strong></div></div></div></section>
 <section class="panel" id="backup"><div class="card"><h2>Cópia de segurança</h2><div class="notice warn">O arquivo inclui dados pessoais e financeiros. Guarde-o em local seguro e faça cópias regularmente.</div><p>Exporte todos os dados em JSON ou restaure uma cópia anterior.</p><div class="actions"><button onclick="backup()">Baixar cópia de segurança</button><label class="btn secondary">Restaurar cópia JSON<input type="file" accept=".json,application/json" hidden onchange="restore(event)"></label></div><p id="binfo" class="note" style="color:#64748b"></p></div></section>
-<section class="panel" id="firebase"><div class="card"><h2>Conexão com Firebase</h2><div class="notice warn">Para sincronizar computadores e celulares, use um projeto Firebase da igreja, autenticação por e-mail/senha e regras de acesso restritas. Não use regras públicas.</div><div class="grid"><div class="field wide"><label>API Key</label><input id="apiKey"></div><div class="field wide"><label>Auth Domain</label><input id="authDomain" placeholder="projeto.firebaseapp.com"></div><div class="field wide"><label>Database URL</label><input id="databaseURL" placeholder="https://projeto-default-rtdb.firebaseio.com"></div><div class="field wide"><label>Project ID</label><input id="projectId"></div><div class="field wide"><label>App ID</label><input id="appId"></div><div class="field wide"><label>Storage Bucket (opcional)</label><input id="storageBucket"></div><div class="field"><label>E-mail</label><input id="fbEmail" type="email"></div><div class="field"><label>Senha</label><input id="fbPass" type="password"></div></div><div class="actions"><button onclick="saveCfg()">Salvar configuração</button><button class="secondary" onclick="createUser()">Criar usuário</button><button onclick="login()">Entrar e sincronizar</button><button class="danger" onclick="logout()">Desconectar</button></div><p id="fbmsg" class="note" style="color:#64748b">Preencha os dados do projeto para ativar a sincronização.</p></div><div class="card"><h3>Preparação do Firebase</h3><ol><li>Acesse <a href="https://console.firebase.google.com/" target="_blank" rel="noopener">Firebase Console</a> e crie um projeto.</li><li>Adicione um aplicativo Web e copie a configuração para os campos acima.</li><li>Em Authentication, habilite E-mail/senha e crie usuários apenas para pessoas autorizadas.</li><li>Crie um Realtime Database e copie a URL.</li><li>Nas regras, exija autenticação. Exemplo inicial:</li></ol><pre>{
+<section class="panel" id="firebase"><div class="card"><h2>Conexão com Firebase</h2><div class="notice warn">Para sincronizar computadores e celulares, use um projeto Firebase da igreja, autenticação por e-mail/senha e regras de acesso restritas. Não use regras públicas.</div><div class="grid"><div class="field wide"><label>API Key (copie do Firebase)</label><input id="apiKey" autocomplete="off"></div><div class="field wide"><label>Auth Domain</label><input id="authDomain" value="igreja-assembleia-santana.firebaseapp.com"></div><div class="field wide"><label>Database URL</label><input id="databaseURL" value="https://igreja-assembleia-santana-default-rtdb.firebaseio.com"></div><div class="field wide"><label>Project ID</label><input id="projectId" value="igreja-assembleia-santana"></div><div class="field wide"><label>App ID</label><input id="appId" value="1:705627299496:web:8c97a4e196942f4c742c9d"></div><div class="field wide"><label>Storage Bucket (opcional)</label><input id="storageBucket" value="igreja-assembleia-santana.firebasestorage.app"></div><div class="field"><label>E-mail</label><input id="fbEmail" type="email"></div><div class="field"><label>Senha</label><input id="fbPass" type="password"></div></div><div class="actions"><button onclick="saveCfg()">Salvar configuração</button><button onclick="login()">Entrar e sincronizar</button><button class="danger" onclick="logout()">Desconectar</button></div><p id="fbmsg" class="note" style="color:#64748b">Preencha os dados do projeto para ativar a sincronização.</p></div><div class="card"><h3>Preparação do Firebase</h3><ol><li>Acesse <a href="https://console.firebase.google.com/" target="_blank" rel="noopener">Firebase Console</a> e crie um projeto.</li><li>Adicione um aplicativo Web e copie a configuração para os campos acima.</li><li>Em Authentication, habilite E-mail/senha e crie usuários apenas para pessoas autorizadas.</li><li>Crie um Realtime Database e copie a URL.</li><li>Nas regras, exija autenticação. Exemplo inicial:</li></ol><pre>{
   "rules": {
     ".read": "auth != null",
     ".write": "auth != null"
@@ -27,7 +27,7 @@
 <script>
 const KEY='ad_santana_v1',CFG='ad_santana_fb_cfg',TYPES=['membros','ofertas','dizimos','escalas','cultos'];
 const EMPTY={membros:[],ofertas:[],dizimos:[],escalas:[],cultos:[]};
-let data=load(),auth=null,db=null,ready=false,listener=null,app=null,applying=false;
+let data=load(),auth=null,db=null,ready=false,listener=null,app=null,applying=false,lastSynced=JSON.parse(JSON.stringify(EMPTY));
 const F={membros:['nome','nasc','tel','ing','cong','func','sit','obs'],ofertas:['data','valor','tipo','resp','obs'],dizimos:['data','valor','nome','forma','resp','obs'],escalas:['data','hora','pessoa','serv','culto','obs'],cultos:['data','hora','tipo','resp','tema','texto','obs']};
 const C={membros:[['nome','Nome'],['tel','Telefone'],['cong','Congregação'],['func','Função'],['sit','Situação']],ofertas:[['data','Data'],['valor','Valor'],['tipo','Tipo'],['resp','Responsável']],dizimos:[['data','Data'],['nome','Dizimista'],['valor','Valor'],['forma','Forma'],['resp','Responsável']],escalas:[['data','Data'],['hora','Horário'],['pessoa','Pessoa'],['serv','Serviço'],['culto','Culto']],cultos:[['data','Data'],['hora','Horário'],['tipo','Culto'],['tema','Tema'],['texto','Texto bíblico'],['resp','Responsável']]};
 const PREFIX={membros:'m',ofertas:'o',dizimos:'d',escalas:'e',cultos:'c'},TABLE={membros:'tm',ofertas:'to',dizimos:'td',escalas:'te',cultos:'tc'},SEARCH={membros:'qm',ofertas:'qo',dizimos:'qd',escalas:'qe',cultos:'qc'};
@@ -35,7 +35,20 @@ function load(){try{return {...structuredClone(EMPTY),...JSON.parse(localStorage
 function money(n){return Number(n||0).toLocaleString('pt-BR',{style:'currency',currency:'BRL'})}
 function dateBR(s){if(!s)return '';let [y,m,d]=s.split('-');return d+'/'+m+'/'+y}
 function safe(s){return String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}
-function save(){localStorage.setItem(KEY,JSON.stringify(data));dashboard();if(ready&&!applying)db.ref('igrejaSantana/dados').set(data).catch(e=>fbmsg('Erro ao sincronizar: '+e.message,true))}
+function save(){localStorage.setItem(KEY,JSON.stringify(data));dashboard();if(ready&&!applying)syncChanges()}
+async function syncChanges(){
+ if(!ready||applying)return;
+ const updates={};
+ TYPES.forEach(t=>{
+  const before=new Map((lastSynced[t]||[]).map(x=>[x.id,x]));
+  const after=new Map((data[t]||[]).map(x=>[x.id,x]));
+  after.forEach((item,id)=>{if(JSON.stringify(before.get(id))!==JSON.stringify(item))updates[t+'/'+id]=item});
+  before.forEach((item,id)=>{if(!after.has(id))updates[t+'/'+id]=null});
+ });
+ if(!Object.keys(updates).length)return;
+ try{await db.ref('igrejaSantana/dados').update(updates);lastSynced=JSON.parse(JSON.stringify(data))}
+ catch(e){fbmsg('Falha ao sincronizar: '+e.message,true)}
+}
 function dashboard(){document.getElementById('kM').textContent=data.membros.length;document.getElementById('kO').textContent=money(total('ofertas'));document.getElementById('kD').textContent=money(total('dizimos'));let today=new Date().toISOString().slice(0,10);document.getElementById('kE').textContent=data.escalas.filter(x=>x.data>=today).length;document.getElementById('ro').textContent=money(total('ofertas'));document.getElementById('rd').textContent=money(total('dizimos'));document.getElementById('rt').textContent=money(total('ofertas')+total('dizimos'));document.getElementById('rm').textContent=data.membros.length;document.getElementById('binfo').textContent='Atualizado em '+new Date().toLocaleString('pt-BR');document.getElementById('membrosLista').innerHTML=data.membros.map(x=>'<option value="'+safe(x.nome)+'">').join('')}
 function total(t){return data[t].reduce((s,x)=>s+Number(x.valor||0),0)}
 function resetForm(id){document.getElementById(id).reset();document.getElementById(id).querySelector('input[type=hidden]').value=''}
@@ -57,8 +70,33 @@ function config(){return {apiKey:apiKey.value.trim(),authDomain:authDomain.value
 function saveCfg(){let c=config();if(!c.apiKey||!c.authDomain||!c.databaseURL||!c.projectId||!c.appId){fbmsg('Preencha API Key, Auth Domain, Database URL, Project ID e App ID.',true);return}localStorage.setItem(CFG,JSON.stringify(c));fbmsg('Configuração salva neste navegador.')}
 function initFB(){let c=config();if(!c.apiKey||!c.authDomain||!c.databaseURL||!c.projectId||!c.appId)throw Error('Configuração Firebase incompleta.');if(!window.firebase)throw Error('SDK Firebase indisponível. Verifique a internet.');if(!app){app=firebase.apps.length?firebase.app():firebase.initializeApp(c);auth=firebase.auth();db=firebase.database()}}
 async function createUser(){try{initFB();if(fbPass.value.length<6)throw Error('A senha deve ter ao menos 6 caracteres.');await auth.createUserWithEmailAndPassword(fbEmail.value.trim(),fbPass.value);fbmsg('Usuário criado e conectado.')}catch(e){fbmsg(e.message,true)}}
-async function login(){try{initFB();await auth.signInWithEmailAndPassword(fbEmail.value.trim(),fbPass.value);let ref=db.ref('igrejaSantana/dados');if(listener)ref.off('value',listener);listener=s=>{let v=s.val();if(v){applying=true;data={...JSON.parse(JSON.stringify(EMPTY)),...v};localStorage.setItem(KEY,JSON.stringify(data));renderAll();applying=false}else ref.set(data)};ref.on('value',listener,e=>fbmsg(e.message,true));ready=true;document.getElementById('status').textContent='● Firebase conectado — '+auth.currentUser.email;fbmsg('Conectado. Sincronização ativada.')}catch(e){fbmsg(e.message,true)}}
+async function login(){try{
+ initFB();
+ await auth.signInWithEmailAndPassword(fbEmail.value.trim(),fbPass.value);
+ const ref=db.ref('igrejaSantana/dados');
+ if(listener)ref.off('value',listener);
+ listener=s=>{
+  const v=s.val();
+  if(v){
+   applying=true;
+   const normalized={...JSON.parse(JSON.stringify(EMPTY)),...v};
+   TYPES.forEach(t=>{if(!Array.isArray(normalized[t]))normalized[t]=Object.values(normalized[t]||{})});
+   data=normalized;
+   lastSynced=JSON.parse(JSON.stringify(normalized));
+   localStorage.setItem(KEY,JSON.stringify(data));
+   renderAll();
+   applying=false;
+  }else{
+   lastSynced=JSON.parse(JSON.stringify(EMPTY));
+   ref.set(data).then(()=>{lastSynced=JSON.parse(JSON.stringify(data))}).catch(e=>fbmsg('Erro ao iniciar dados remotos: '+e.message,true));
+  }
+ };
+ ref.on('value',listener,e=>fbmsg('Erro de leitura: '+e.message,true));
+ ready=true;
+ document.getElementById('status').textContent='● Firebase conectado — '+auth.currentUser.email;
+ fbmsg('Conectado. Os registros serão sincronizados individualmente entre os dispositivos.');
+ }catch(e){fbmsg(e.message,true)}}
 async function logout(){try{if(auth)await auth.signOut();if(db&&listener)db.ref('igrejaSantana/dados').off('value',listener);ready=false;listener=null;document.getElementById('status').textContent='● Modo local — dados neste dispositivo';fbmsg('Desconectado. Dados locais preservados.')}catch(e){fbmsg(e.message,true)}}
-try{let c=JSON.parse(localStorage.getItem(CFG)||'{}');Object.entries({apiKey:'apiKey',authDomain:'authDomain',databaseURL:'databaseURL',projectId:'projectId',appId:'appId',storageBucket:'storageBucket'}).forEach(([id,k])=>document.getElementById(id).value=c[k]||'')}catch(e){}
+try{let c=JSON.parse(localStorage.getItem(CFG)||'{}');Object.entries({apiKey:'apiKey',authDomain:'authDomain',databaseURL:'databaseURL',projectId:'projectId',appId:'appId',storageBucket:'storageBucket'}).forEach(([id,k])=>{if(c[k])document.getElementById(id).value=c[k]})}catch(e){}
 renderAll();
 </script></body></html>
